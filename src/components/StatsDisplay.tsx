@@ -2,9 +2,15 @@ import type { ActivityLog } from '../types';
 
 interface StatsDisplayProps {
   logs: ActivityLog[];
+  onDelete: (id: string) => void;
+  onEdit: (log: ActivityLog) => void;
 }
 
-export default function StatsDisplay({ logs }: StatsDisplayProps) {
+export default function StatsDisplay({
+  logs,
+  onDelete,
+  onEdit,
+}: StatsDisplayProps) {
   // 1. Calculate General Stats
   const uniqueDays = new Set(logs.map((log) => log.date)).size;
   const totalActivities = logs.length;
@@ -32,6 +38,12 @@ export default function StatsDisplay({ logs }: StatsDisplayProps) {
         totalCardioDistance += Number(log.cardio_distance);
     }
   });
+
+  // Helper to change 2023-12-25 -> 25/12/2023
+  const formatDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  };
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
@@ -61,7 +73,7 @@ export default function StatsDisplay({ logs }: StatsDisplayProps) {
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           {Object.entries(breakdown).length === 0 ? (
             <p className="p-4 text-center text-gray-400 text-sm">
-              No muscle data yet.
+              No data yet.
             </p>
           ) : (
             Object.entries(breakdown).map(([name, count], index) => (
@@ -82,36 +94,81 @@ export default function StatsDisplay({ logs }: StatsDisplayProps) {
       </div>
 
       {/* Cardio Stats Section */}
-      <div>
-        <h3 className="text-lg font-bold text-gray-800 mb-3">Cardio Stats</h3>
-        <div className="bg-orange-50 rounded-xl border border-orange-100 p-4 space-y-4">
-          <div className="flex justify-between items-center border-b border-orange-200 pb-3">
-            <span className="text-orange-900 font-medium">Sessions</span>
-            <span className="text-2xl font-bold text-orange-600">
-              {cardioSessions}
-            </span>
-          </div>
+      {cardioSessions > 0 && (
+        <div>
+          <h3 className="text-lg font-bold text-gray-800 mb-3">Cardio Stats</h3>
+          <div className="bg-orange-50 rounded-xl border border-orange-100 p-4 space-y-4">
+            <div className="flex justify-between items-center border-b border-orange-200 pb-3">
+              <span className="text-orange-900 font-medium">Sessions</span>
+              <span className="text-2xl font-bold text-orange-600">
+                {cardioSessions}
+              </span>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
-                Total Time
-              </p>
-              <p className="text-xl font-bold text-orange-700">
-                {totalCardioTime}{' '}
-                <span className="text-sm font-normal">min</span>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
-                Total Distance
-              </p>
-              <p className="text-xl font-bold text-orange-700">
-                {totalCardioDistance}{' '}
-                <span className="text-sm font-normal">km</span>
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
+                  Total Time
+                </p>
+                <p className="text-xl font-bold text-orange-700">
+                  {totalCardioTime}{' '}
+                  <span className="text-sm font-normal">min</span>
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
+                  Total Distance
+                </p>
+                <p className="text-xl font-bold text-orange-700">
+                  {totalCardioDistance}{' '}
+                  <span className="text-sm font-normal">km</span>
+                </p>
+              </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Recent History List */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-800 mb-3">Recent History</h3>
+        <div className="space-y-3">
+          {logs.map((log) => (
+            <div
+              key={log.id}
+              className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center"
+            >
+              <div>
+                <p className="text-sm text-gray-500 font-medium">
+                  {formatDate(log.date)}
+                </p>
+                <p className="font-bold text-gray-800 capitalize">
+                  {log.activity_ids.join(', ') || 'Rest Day'}
+                </p>
+                {log.is_cardio && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    🏃 Cardio: {log.cardio_time}min / {log.cardio_distance}km
+                  </p>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                {/* Edit Button */}
+                <button
+                  onClick={() => onEdit(log)}
+                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  ✎
+                </button>
+                {/* Delete Button */}
+                <button
+                  onClick={() => onDelete(log.id)}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

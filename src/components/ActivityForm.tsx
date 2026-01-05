@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
 import { supabase } from '../supabase';
+import type { ActivityLog } from '../types'; // Added Import
 
 const ACTIVITY_OPTIONS = [
   { id: 'abs', label: 'Abs' },
@@ -11,12 +12,18 @@ const ACTIVITY_OPTIONS = [
   { id: 'triceps', label: 'Triceps' },
 ];
 
-// Optional: define a prop to notify the parent component when a new log is added
 interface ActivityFormProps {
   onSuccess?: () => void;
+  initialData?: ActivityLog | null; // NEW PROP
+  onCancel?: () => void; // NEW PROP
 }
 
-export default function ActivityForm({ onSuccess }: ActivityFormProps) {
+export default function ActivityForm({
+  onSuccess,
+  initialData,
+  onCancel,
+}: ActivityFormProps) {
+  // Initialize state with default OR initialData if editing
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [isCardio, setIsCardio] = useState(false);
@@ -24,6 +31,17 @@ export default function ActivityForm({ onSuccess }: ActivityFormProps) {
   const [cardioDistance, setCardioDistance] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // When "initialData" changes (user clicked Edit), fill the form
+  useEffect(() => {
+    if (initialData) {
+      setDate(initialData.date);
+      setSelectedActivities(initialData.activity_ids);
+      setIsCardio(initialData.is_cardio);
+      setCardioTime(initialData.cardio_time?.toString() || '');
+      setCardioDistance(initialData.cardio_distance?.toString() || '');
+    }
+  }, [initialData]);
 
   const handleActivityToggle = (id: string) => {
     setSelectedActivities((prev) =>
@@ -35,40 +53,65 @@ export default function ActivityForm({ onSuccess }: ActivityFormProps) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // 1. Prepare data for Supabase (matching the SQL table column names)
     const payload = {
-      date: date,
+      date,
       activity_ids: selectedActivities,
       is_cardio: isCardio,
-      // Convert string inputs to numbers, or null if empty
       cardio_time: cardioTime ? parseFloat(cardioTime) : null,
       cardio_distance: cardioDistance ? parseFloat(cardioDistance) : null,
     };
 
-    // 2. Send to Supabase
-    const { error } = await supabase.from('activities').insert([payload]);
+    let error;
+
+    if (initialData) {
+      // UPDATE existing row
+      const result = await supabase
+        .from('activities')
+        .update(payload)
+        .eq('id', initialData.id); // Must match ID
+      error = result.error;
+    } else {
+      // INSERT new row
+      const result = await supabase.from('activities').insert([payload]);
+      error = result.error;
+    }
 
     setIsSubmitting(false);
 
     if (error) {
-      alert('Error saving data: ' + error.message);
-      console.error(error);
+      alert('Error: ' + error.message);
     } else {
-      alert('Workout saved successfully! 💪');
-
-      // Reset form (optional, but good UX)
-      setSelectedActivities([]);
-      setIsCardio(false);
-      setCardioTime('');
-      setCardioDistance('');
-
-      // Notify parent to refresh list
+      // Clear form ONLY if creating new. If editing, we usually close the form.
+      if (!initialData) {
+        setSelectedActivities([]);
+        setIsCardio(false);
+        setCardioTime('');
+        setCardioDistance('');
+        alert('Saved successfully! 💪');
+      }
       if (onSuccess) onSuccess();
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Header showing if we are Editing */}
+      {initialData && (
+        <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm flex justify-between items-center">
+          <span>
+            ⚠️ Editing workout from{' '}
+            <b>{initialData.date.split('-').reverse().join('/')}</b>
+          </span>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="underline font-bold"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Date
@@ -153,7 +196,11 @@ export default function ActivityForm({ onSuccess }: ActivityFormProps) {
             : 'bg-blue-600 hover:bg-blue-700'
         }`}
       >
-        {isSubmitting ? 'Saving...' : 'Log Workout'}
+        {isSubmitting
+          ? 'Saving...'
+          : initialData
+          ? 'Update Workout'
+          : 'Log Workout'}
       </button>
     </form>
   );
