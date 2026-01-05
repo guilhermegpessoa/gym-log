@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { supabase } from '../supabase';
 
-// We define the available activities here for easy editing later
 const ACTIVITY_OPTIONS = [
   { id: 'abs', label: 'Abs' },
   { id: 'back', label: 'Back' },
@@ -11,40 +11,64 @@ const ACTIVITY_OPTIONS = [
   { id: 'triceps', label: 'Triceps' },
 ];
 
-export default function ActivityForm() {
-  // State for the form fields
+// Optional: define a prop to notify the parent component when a new log is added
+interface ActivityFormProps {
+  onSuccess?: () => void;
+}
+
+export default function ActivityForm({ onSuccess }: ActivityFormProps) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [isCardio, setIsCardio] = useState(false);
   const [cardioTime, setCardioTime] = useState('');
   const [cardioDistance, setCardioDistance] = useState('');
 
-  // Handle checking/unchecking activities
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleActivityToggle = (id: string) => {
-    setSelectedActivities(
-      (prev) =>
-        prev.includes(id)
-          ? prev.filter((item) => item !== id) // Remove if already checked
-          : [...prev, id] // Add if not checked
+    setSelectedActivities((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // We will hook this up to the database later
-    console.log({
-      date,
-      selectedActivities,
-      isCardio,
-      cardioTime,
-      cardioDistance,
-    });
-    alert('Check the console to see the data object!');
+    setIsSubmitting(true);
+
+    // 1. Prepare data for Supabase (matching the SQL table column names)
+    const payload = {
+      date: date,
+      activity_ids: selectedActivities,
+      is_cardio: isCardio,
+      // Convert string inputs to numbers, or null if empty
+      cardio_time: cardioTime ? parseFloat(cardioTime) : null,
+      cardio_distance: cardioDistance ? parseFloat(cardioDistance) : null,
+    };
+
+    // 2. Send to Supabase
+    const { error } = await supabase.from('activities').insert([payload]);
+
+    setIsSubmitting(false);
+
+    if (error) {
+      alert('Error saving data: ' + error.message);
+      console.error(error);
+    } else {
+      alert('Workout saved successfully! 💪');
+
+      // Reset form (optional, but good UX)
+      setSelectedActivities([]);
+      setIsCardio(false);
+      setCardioTime('');
+      setCardioDistance('');
+
+      // Notify parent to refresh list
+      if (onSuccess) onSuccess();
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 1. Date Picker */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Date
@@ -57,7 +81,6 @@ export default function ActivityForm() {
         />
       </div>
 
-      {/* 2. Activity Type (Checkboxes) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Muscles Worked
@@ -80,7 +103,6 @@ export default function ActivityForm() {
         </div>
       </div>
 
-      {/* 3. Cardio Section */}
       <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
         <label className="flex items-center space-x-2 cursor-pointer mb-2">
           <input
@@ -92,7 +114,6 @@ export default function ActivityForm() {
           <span className="font-medium text-blue-800">I did Cardio</span>
         </label>
 
-        {/* Conditional rendering: Only show if isCardio is true */}
         {isCardio && (
           <div className="grid grid-cols-2 gap-4 mt-3 animate-fade-in">
             <div>
@@ -123,12 +144,16 @@ export default function ActivityForm() {
         )}
       </div>
 
-      {/* Submit Button */}
       <button
         type="submit"
-        className="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-colors"
+        disabled={isSubmitting}
+        className={`w-full py-3 px-4 text-white font-bold rounded-xl shadow-lg transition-colors ${
+          isSubmitting
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-blue-600 hover:bg-blue-700'
+        }`}
       >
-        Log Workout
+        {isSubmitting ? 'Saving...' : 'Log Workout'}
       </button>
     </form>
   );

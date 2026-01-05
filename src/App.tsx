@@ -1,36 +1,38 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from './supabase';
 import ActivityForm from './components/ActivityForm';
 import StatsDisplay from './components/StatsDisplay';
 import type { ActivityLog } from './types';
 
-// DUMMY DATA FOR TESTING
-// We will replace this with real Database data later
-const DUMMY_LOGS: ActivityLog[] = [
-  {
-    id: '1',
-    date: '2023-10-01',
-    activity_ids: ['chest', 'triceps'],
-    is_cardio: false,
-  },
-  {
-    id: '2',
-    date: '2023-10-03',
-    activity_ids: ['back', 'biceps'],
-    is_cardio: true,
-    cardio_time: 20,
-    cardio_distance: 3,
-  },
-  { id: '3', date: '2023-10-05', activity_ids: ['legs'], is_cardio: false },
-  { id: '4', date: '2023-10-05', activity_ids: ['chest'], is_cardio: false }, // Double session day
-];
-
 function App() {
-  // Simple state to toggle views
   const [view, setView] = useState<'log' | 'stats'>('log');
+  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Function to get data from Supabase
+  const fetchLogs = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching logs:', error);
+    } else {
+      setLogs(data as ActivityLog[]);
+    }
+    setLoading(false);
+  };
+
+  // Run this when the app starts
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[500px]">
+      <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden flex flex-col min-h-[600px]">
         {/* Header */}
         <div className="p-6 pb-2">
           <h1 className="text-2xl font-bold text-center text-gray-800">
@@ -64,10 +66,19 @@ function App() {
 
         {/* Main Content Area */}
         <div className="p-6 flex-1">
-          {view === 'log' ? (
-            <ActivityForm />
+          {loading ? (
+            <div className="text-center py-10 text-gray-500">
+              Loading history...
+            </div>
           ) : (
-            <StatsDisplay logs={DUMMY_LOGS} />
+            <>
+              {view === 'log' ? (
+                // We pass fetchLogs as 'onSuccess' so the stats update after saving
+                <ActivityForm onSuccess={fetchLogs} />
+              ) : (
+                <StatsDisplay logs={logs} />
+              )}
+            </>
           )}
         </div>
       </div>
