@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'; // Added useEffect
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import type { ActivityLog } from '../types'; // Added Import
+import type { ActivityLog } from '../types';
 
 const ACTIVITY_OPTIONS = [
   { id: 'abs', label: 'Abs' },
@@ -14,8 +14,8 @@ const ACTIVITY_OPTIONS = [
 
 interface ActivityFormProps {
   onSuccess?: () => void;
-  initialData?: ActivityLog | null; // NEW PROP
-  onCancel?: () => void; // NEW PROP
+  initialData?: ActivityLog | null;
+  onCancel?: () => void;
 }
 
 export default function ActivityForm({
@@ -23,7 +23,6 @@ export default function ActivityForm({
   initialData,
   onCancel,
 }: ActivityFormProps) {
-  // Initialize state with default OR initialData if editing
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [isCardio, setIsCardio] = useState(false);
@@ -32,7 +31,6 @@ export default function ActivityForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // When "initialData" changes (user clicked Edit), fill the form
   useEffect(() => {
     if (initialData) {
       setDate(initialData.date);
@@ -40,13 +38,28 @@ export default function ActivityForm({
       setIsCardio(initialData.is_cardio);
       setCardioTime(initialData.cardio_time?.toString() || '');
       setCardioDistance(initialData.cardio_distance?.toString() || '');
+    } else {
+      setDate(new Date().toISOString().split('T')[0]);
+      setSelectedActivities([]);
+      setIsCardio(false);
+      setCardioTime('');
+      setCardioDistance('');
     }
-  }, [initialData]);
+  }, [initialData?.id]);
 
   const handleActivityToggle = (id: string) => {
     setSelectedActivities((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
+  };
+
+  const handleSelectAll = () => {
+    // If all are already selected, clear them. Otherwise, select all.
+    if (selectedActivities.length === ACTIVITY_OPTIONS.length) {
+      setSelectedActivities([]);
+    } else {
+      setSelectedActivities(ACTIVITY_OPTIONS.map((opt) => opt.id));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,14 +77,12 @@ export default function ActivityForm({
     let error;
 
     if (initialData) {
-      // UPDATE existing row
       const result = await supabase
         .from('activities')
         .update(payload)
-        .eq('id', initialData.id); // Must match ID
+        .eq('id', initialData.id);
       error = result.error;
     } else {
-      // INSERT new row
       const result = await supabase.from('activities').insert([payload]);
       error = result.error;
     }
@@ -81,7 +92,6 @@ export default function ActivityForm({
     if (error) {
       alert('Error: ' + error.message);
     } else {
-      // Clear form ONLY if creating new. If editing, we usually close the form.
       if (!initialData) {
         setSelectedActivities([]);
         setIsCardio(false);
@@ -95,7 +105,6 @@ export default function ActivityForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Header showing if we are Editing */}
       {initialData && (
         <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm flex justify-between items-center">
           <span>
@@ -125,9 +134,21 @@ export default function ActivityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Muscles Worked
-        </label>
+        <div className="flex justify-between items-center mb-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Muscles Worked
+          </label>
+          <button
+            type="button"
+            onClick={handleSelectAll}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+          >
+            {selectedActivities.length === ACTIVITY_OPTIONS.length
+              ? 'Deselect All'
+              : 'Select All'}
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
           {ACTIVITY_OPTIONS.map((option) => (
             <label
