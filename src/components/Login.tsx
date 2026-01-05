@@ -5,6 +5,10 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          // This automatically detects the current URL (localhost or vercel)
+          redirectTo: window.location.origin,
+        },
       });
       if (error) throw error;
     } catch (error) {
