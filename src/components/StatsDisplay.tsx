@@ -55,19 +55,20 @@ export default function StatsDisplay({
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
-      {/* Date Filter Section */}
+      {/* --- RESPONSIVE DATE FILTER SECTION --- */}
       <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">
           Filter Period
         </h3>
-        <div className="flex gap-4">
+        {/* Responsive Layout: Stacked on mobile, side-by-side on desktop */}
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <label className="block text-xs text-gray-400 mb-1">From</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50"
             />
           </div>
           <div className="flex-1">
@@ -76,7 +77,7 @@ export default function StatsDisplay({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50"
             />
           </div>
         </div>
