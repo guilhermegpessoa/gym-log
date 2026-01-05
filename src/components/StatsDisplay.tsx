@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ActivityLog } from '../types';
 
 interface StatsDisplayProps {
@@ -11,19 +12,26 @@ export default function StatsDisplay({
   onDelete,
   onEdit,
 }: StatsDisplayProps) {
-  // 1. Calculate General Stats
-  const uniqueDays = new Set(logs.map((log) => log.date)).size;
-  const totalActivities = logs.length;
+  // 1. Setup Default Dates (Current Year)
+  const currentYear = new Date().getFullYear();
+  const [startDate, setStartDate] = useState(`${currentYear}-01-01`);
+  const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
 
-  // 2. Calculate Muscle Breakdown
+  // 2. Filter Logs based on Date Range
+  const filteredLogs = logs.filter((log) => {
+    return log.date >= startDate && log.date <= endDate;
+  });
+
+  // --- STATS CALCULATIONS (Using filteredLogs now) ---
+  const uniqueDays = new Set(filteredLogs.map((log) => log.date)).size;
+  const totalActivities = filteredLogs.length;
+
   const breakdown: Record<string, number> = {};
-
-  // 3. Calculate Cardio Stats
   let cardioSessions = 0;
   let totalCardioTime = 0;
   let totalCardioDistance = 0;
 
-  logs.forEach((log) => {
+  filteredLogs.forEach((log) => {
     // Muscle Breakdown
     log.activity_ids.forEach((activity) => {
       const name = activity.charAt(0).toUpperCase() + activity.slice(1);
@@ -47,6 +55,33 @@ export default function StatsDisplay({
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
+      {/* Date Filter Section */}
+      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">
+          Filter Period
+        </h3>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block text-xs text-gray-400 mb-1">From</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs text-gray-400 mb-1">To</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Top Cards: General Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
@@ -73,7 +108,7 @@ export default function StatsDisplay({
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           {Object.entries(breakdown).length === 0 ? (
             <p className="p-4 text-center text-gray-400 text-sm">
-              No data yet.
+              No data in this period.
             </p>
           ) : (
             Object.entries(breakdown).map(([name, count], index) => (
@@ -129,46 +164,52 @@ export default function StatsDisplay({
         </div>
       )}
 
-      {/* Recent History List */}
+      {/* Recent History List (Using Filtered Logs) */}
       <div>
-        <h3 className="text-lg font-bold text-gray-800 mb-3">Recent History</h3>
+        <h3 className="text-lg font-bold text-gray-800 mb-3">
+          History ({filteredLogs.length})
+        </h3>
         <div className="space-y-3">
-          {logs.map((log) => (
-            <div
-              key={log.id}
-              className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center"
-            >
-              <div>
-                <p className="text-sm text-gray-500 font-medium">
-                  {formatDate(log.date)}
-                </p>
-                <p className="font-bold text-gray-800 capitalize">
-                  {log.activity_ids.join(', ') || 'Rest Day'}
-                </p>
-                {log.is_cardio && (
-                  <p className="text-xs text-orange-600 mt-1">
-                    🏃 Cardio: {log.cardio_time}min / {log.cardio_distance}km
+          {filteredLogs.length === 0 ? (
+            <p className="text-gray-400 text-sm italic">
+              No logs found for this period.
+            </p>
+          ) : (
+            filteredLogs.map((log) => (
+              <div
+                key={log.id}
+                className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center"
+              >
+                <div>
+                  <p className="text-sm text-gray-500 font-medium">
+                    {formatDate(log.date)}
                   </p>
-                )}
+                  <p className="font-bold text-gray-800 capitalize">
+                    {log.activity_ids.join(', ') || 'Rest Day'}
+                  </p>
+                  {log.is_cardio && (
+                    <p className="text-xs text-orange-600 mt-1">
+                      🏃 Cardio: {log.cardio_time}min / {log.cardio_distance}km
+                    </p>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => onEdit(log)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    onClick={() => onDelete(log.id)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
-              <div className="flex space-x-2">
-                {/* Edit Button */}
-                <button
-                  onClick={() => onEdit(log)}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  ✎
-                </button>
-                {/* Delete Button */}
-                <button
-                  onClick={() => onDelete(log.id)}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
