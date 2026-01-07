@@ -187,7 +187,7 @@ export default function StatsDisplay({
                     {formatDate(log.date)}
                   </p>
                   <p className="font-bold text-gray-800 capitalize">
-                    {log.activity_ids.join(', ') || 'Rest Day'}
+                    {log.activity_ids.join(', ') || 'Cardio'}
                   </p>
                   {log.is_cardio && (
                     <p className="text-xs text-orange-600 mt-1">
