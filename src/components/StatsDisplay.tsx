@@ -22,7 +22,7 @@ export default function StatsDisplay({
     return log.date >= startDate && log.date <= endDate;
   });
 
-  // --- STATS CALCULATIONS (Using filteredLogs now) ---
+  // STATS CALCULATIONS
   const uniqueDays = new Set(filteredLogs.map((log) => log.date)).size;
   const totalActivities = filteredLogs.length;
 
@@ -47,6 +47,13 @@ export default function StatsDisplay({
     }
   });
 
+  // Calculate Average Pace (Time / Distance)
+  // Avoid division by zero
+  const averagePace =
+    totalCardioDistance > 0
+      ? (totalCardioTime / totalCardioDistance).toFixed(2)
+      : '0.00';
+
   // Helper to change 2023-12-25 -> 25/12/2023
   const formatDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-');
@@ -69,7 +76,7 @@ export default function StatsDisplay({
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="block w-full max-w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50 appearance-none box-border"
-              style={{ WebkitAppearance: 'none' }} // Extra safety for iOS
+              style={{ WebkitAppearance: 'none' }}
             />
           </div>
 
@@ -80,7 +87,7 @@ export default function StatsDisplay({
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="block w-full max-w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50 appearance-none box-border"
-              style={{ WebkitAppearance: 'none' }} // Extra safety for iOS
+              style={{ WebkitAppearance: 'none' }}
             />
           </div>
         </div>
@@ -144,7 +151,8 @@ export default function StatsDisplay({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* 3 columns on small screens and up to fit Pace */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
                   Total Time
@@ -156,11 +164,20 @@ export default function StatsDisplay({
               </div>
               <div>
                 <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
-                  Total Distance
+                  Total Dist
                 </p>
                 <p className="text-xl font-bold text-orange-700">
                   {parseFloat(totalCardioDistance.toFixed(2))}{' '}
                   <span className="text-sm font-normal">km</span>
+                </p>
+              </div>
+              {/* Average Pace */}
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
+                  Avg Pace
+                </p>
+                <p className="text-xl font-bold text-orange-700">
+                  {averagePace} <span className="text-sm font-normal">/km</span>
                 </p>
               </div>
             </div>
@@ -168,7 +185,7 @@ export default function StatsDisplay({
         </div>
       )}
 
-      {/* Recent History List (Using Filtered Logs) */}
+      {/* Recent History List */}
       <div>
         <h3 className="text-lg font-bold text-gray-800 mb-3">
           History ({filteredLogs.length})
@@ -179,40 +196,56 @@ export default function StatsDisplay({
               No logs found for this period.
             </p>
           ) : (
-            filteredLogs.map((log) => (
-              <div
-                key={log.id}
-                className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center"
-              >
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {formatDate(log.date)}
-                  </p>
-                  <p className="font-bold text-gray-800 capitalize">
-                    {log.activity_ids.join(', ') || 'Cardio'}
-                  </p>
-                  {log.is_cardio && (
-                    <p className="text-xs text-orange-600 mt-1">
-                      🏃 Cardio: {log.cardio_time}min / {log.cardio_distance}km
+            filteredLogs.map((log) => {
+              // Calculate pace for this specific entry
+              const logPace =
+                log.is_cardio && log.cardio_distance && log.cardio_time
+                  ? (
+                      Number(log.cardio_time) / Number(log.cardio_distance)
+                    ).toFixed(2)
+                  : null;
+
+              return (
+                <div
+                  key={log.id}
+                  className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center"
+                >
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">
+                      {formatDate(log.date)}
                     </p>
-                  )}
+                    <p className="font-bold text-gray-800 capitalize">
+                      {log.activity_ids.join(', ') || 'Cardio'}
+                    </p>
+                    {log.is_cardio && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        🏃 {log.cardio_time}min / {log.cardio_distance}km
+                        {/* Display Pace if available */}
+                        {logPace && (
+                          <span className="font-bold ml-1">
+                            (@ {logPace}/km)
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => onEdit(log)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={() => onDelete(log.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => onEdit(log)}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    onClick={() => onDelete(log.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
