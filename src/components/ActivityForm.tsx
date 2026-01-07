@@ -32,12 +32,10 @@ export default function ActivityForm({
   };
 
   const [date, setDate] = useState(getLocalDate());
-
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [isCardio, setIsCardio] = useState(false);
   const [cardioTime, setCardioTime] = useState('');
   const [cardioDistance, setCardioDistance] = useState('');
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -48,7 +46,6 @@ export default function ActivityForm({
       setCardioTime(initialData.cardio_time?.toString() || '');
       setCardioDistance(initialData.cardio_distance?.toString() || '');
     } else {
-      // AND USE THE HELPER HERE (Reset to Today)
       setDate(getLocalDate());
       setSelectedActivities([]);
       setIsCardio(false);
@@ -138,7 +135,8 @@ export default function ActivityForm({
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="block w-full min-w-0 box-border p-3 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white appearance-none"
+          style={{ WebkitAppearance: 'none' }}
         />
       </div>
 
