@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ActivityLog } from '../types';
 
 interface StatsDisplayProps {
@@ -17,10 +17,18 @@ export default function StatsDisplay({
   const [startDate, setStartDate] = useState(`${currentYear}-01-01`);
   const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
 
+  // Pagination State
+  const [visibleCount, setVisibleCount] = useState(5);
+
   // 2. Filter Logs based on Date Range
   const filteredLogs = logs.filter((log) => {
     return log.date >= startDate && log.date <= endDate;
   });
+
+  // Reset pagination when dates change
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [startDate, endDate, logs]);
 
   // STATS CALCULATIONS
   const uniqueDays = new Set(filteredLogs.map((log) => log.date)).size;
@@ -48,7 +56,6 @@ export default function StatsDisplay({
   });
 
   // Calculate Average Pace (Time / Distance)
-  // Avoid division by zero
   const averagePace =
     totalCardioDistance > 0
       ? (totalCardioTime / totalCardioDistance).toFixed(2)
@@ -59,6 +66,9 @@ export default function StatsDisplay({
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
   };
+
+  // Slice the logs for display
+  const displayedLogs = filteredLogs.slice(0, visibleCount);
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
@@ -151,7 +161,6 @@ export default function StatsDisplay({
               </span>
             </div>
 
-            {/* 3 columns on small screens and up to fit Pace */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <p className="text-xs text-orange-800 uppercase font-bold opacity-70">
@@ -191,13 +200,12 @@ export default function StatsDisplay({
           History ({filteredLogs.length})
         </h3>
         <div className="space-y-3">
-          {filteredLogs.length === 0 ? (
+          {displayedLogs.length === 0 ? (
             <p className="text-gray-400 text-sm italic">
               No logs found for this period.
             </p>
           ) : (
-            filteredLogs.map((log) => {
-              // Calculate pace for this specific entry
+            displayedLogs.map((log) => {
               const logPace =
                 log.is_cardio && log.cardio_distance && log.cardio_time
                   ? (
@@ -220,7 +228,6 @@ export default function StatsDisplay({
                     {log.is_cardio && (
                       <p className="text-xs text-orange-600 mt-1">
                         🏃 {log.cardio_time}min / {log.cardio_distance}km
-                        {/* Display Pace if available */}
                         {logPace && (
                           <span className="font-bold ml-1">
                             (@ {logPace}/km)
@@ -246,6 +253,15 @@ export default function StatsDisplay({
                 </div>
               );
             })
+          )}
+
+          {visibleCount < filteredLogs.length && (
+            <button
+              onClick={() => setVisibleCount((prev) => prev + 5)}
+              className="w-full py-3 text-sm font-bold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
+            >
+              Show More ({filteredLogs.length - visibleCount} remaining)
+            </button>
           )}
         </div>
       </div>
