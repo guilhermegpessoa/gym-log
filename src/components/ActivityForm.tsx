@@ -175,7 +175,7 @@ export default function ActivityForm({
       </div>
 
       <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-        <label className="flex items-center space-x-2 cursor-pointer mb-2">
+        <label className="flex items-center space-x-2 cursor-pointer">
           <input
             type="checkbox"
             checked={isCardio}
