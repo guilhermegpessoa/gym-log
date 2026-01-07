@@ -148,7 +148,7 @@ export default function StatsDisplay({
                   Total Time
                 </p>
                 <p className="text-xl font-bold text-orange-700">
-                  {totalCardioTime}{' '}
+                  {parseFloat(totalCardioTime.toFixed(2))}{' '}
                   <span className="text-sm font-normal">min</span>
                 </p>
               </div>
@@ -157,7 +157,7 @@ export default function StatsDisplay({
                   Total Distance
                 </p>
                 <p className="text-xl font-bold text-orange-700">
-                  {totalCardioDistance}{' '}
+                  {parseFloat(totalCardioDistance.toFixed(2))}{' '}
                   <span className="text-sm font-normal">km</span>
                 </p>
               </div>
