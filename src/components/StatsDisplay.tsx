@@ -62,23 +62,25 @@ export default function StatsDisplay({
         </h3>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full">
-          <div className="flex-1 w-full min-w-0">
+          <div className="w-full">
             <label className="block text-xs text-gray-400 mb-1">From</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="block w-full min-w-0 p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50"
+              className="block w-full max-w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50 appearance-none box-border"
+              style={{ WebkitAppearance: 'none' }} // Extra safety for iOS
             />
           </div>
 
-          <div className="flex-1 w-full min-w-0">
+          <div className="w-full">
             <label className="block text-xs text-gray-400 mb-1">To</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="block w-full min-w-0 p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50"
+              className="block w-full max-w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50 appearance-none box-border"
+              style={{ WebkitAppearance: 'none' }} // Extra safety for iOS
             />
           </div>
         </div>
