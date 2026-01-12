@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import type { ActivityLog } from '../types';
-
-const ACTIVITY_OPTIONS = [
-  { id: 'abs', label: 'Abs' },
-  { id: 'back', label: 'Back' },
-  { id: 'biceps', label: 'Biceps' },
-  { id: 'chest', label: 'Chest' },
-  { id: 'legs', label: 'Legs' },
-  { id: 'shoulders', label: 'Shoulders' },
-  { id: 'triceps', label: 'Triceps' },
-];
+import { ACTIVITY_OPTIONS } from '../constants';
 
 interface ActivityFormProps {
   onSuccess?: () => void;

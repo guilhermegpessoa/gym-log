@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ActivityLog } from '../types';
+import { ACTIVITY_OPTIONS } from '../constants';
 
 interface StatsDisplayProps {
   logs: ActivityLog[];
@@ -41,8 +42,10 @@ export default function StatsDisplay({
 
   filteredLogs.forEach((log) => {
     // Muscle Breakdown
-    log.activity_ids.forEach((activity) => {
-      const name = activity.charAt(0).toUpperCase() + activity.slice(1);
+    log.activity_ids.forEach((activityId) => {
+      const option = ACTIVITY_OPTIONS.find((opt) => opt.id === activityId);
+      const name = option ? option.label : activityId;
+
       breakdown[name] = (breakdown[name] || 0) + 1;
     });
 
