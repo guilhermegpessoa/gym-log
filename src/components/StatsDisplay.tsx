@@ -135,19 +135,19 @@ export default function StatsDisplay({
               No data in this period.
             </p>
           ) : (
-            Object.entries(breakdown).map(([name, count], index) => (
-              <div
-                key={name}
-                className={`flex justify-between items-center p-3 ${
-                  index !== 0 ? 'border-t border-gray-100' : ''
-                }`}
-              >
-                <span className="font-medium text-gray-700">{name}</span>
-                <span className="bg-gray-100 text-gray-600 py-1 px-3 rounded-full text-xs font-bold">
-                  {count}
-                </span>
-              </div>
-            ))
+            Object.entries(breakdown)
+              .sort(([, countA], [, countB]) => countB - countA)
+              .map(([name, count], index) => (
+                <div
+                  key={name}
+                  className={`flex justify-between items-center p-3 ${index !== 0 ? 'border-t border-gray-100' : ''}`}
+                >
+                  <span className="font-medium text-gray-700">{name}</span>
+                  <span className="bg-gray-100 text-gray-600 py-1 px-3 rounded-full text-xs font-bold">
+                    {count}
+                  </span>
+                </div>
+              ))
           )}
         </div>
       </div>
