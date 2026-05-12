@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import ActivityForm from './components/ActivityForm';
 import StatsDisplay from './components/StatsDisplay';
+import RoutinesManager from './components/RoutinesManager';
 import Login from './components/Login';
 import type { ActivityLog } from './types';
 import type { Session } from '@supabase/supabase-js';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [view, setView] = useState<'log' | 'stats'>('log');
+  const [view, setView] = useState<'log' | 'routines' | 'stats'>('log');
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // NEW: Store which log is being edited
   const [editingLog, setEditingLog] = useState<ActivityLog | null>(null);
 
   useEffect(() => {
@@ -49,11 +49,9 @@ function App() {
     setLogs([]);
   };
 
-  // --- NEW ACTIONS ---
-
   const handleDelete = async (id: string) => {
     const confirm = window.confirm(
-      'Are you sure you want to delete this workout?'
+      'Are you sure you want to delete this workout?',
     );
     if (!confirm) return;
 
@@ -78,8 +76,6 @@ function App() {
     fetchLogs(); // Refresh data
   };
 
-  // -------------------
-
   if (!session) {
     return (
       <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
@@ -101,27 +97,22 @@ function App() {
           </button>
         </div>
 
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 mb-6 bg-white">
           <button
-            onClick={() => {
-              setView('log');
-              setEditingLog(null);
-            }} // Clear edit if manually clicking tab
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              view === 'log'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${view === 'log' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-400'}`}
+            onClick={() => setView('log')}
           >
-            {editingLog ? 'Editing Workout' : 'Log Workout'}
+            Log Workout
           </button>
           <button
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${view === 'routines' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-400'}`}
+            onClick={() => setView('routines')}
+          >
+            Worksheets
+          </button>
+          <button
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${view === 'stats' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-400'}`}
             onClick={() => setView('stats')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              view === 'stats'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
           >
             My Stats
           </button>
@@ -134,20 +125,15 @@ function App() {
             </div>
           ) : (
             <>
-              {view === 'log' ? (
-                <ActivityForm
-                  onSuccess={handleSuccess}
-                  initialData={editingLog}
-                  onCancel={() => {
-                    setEditingLog(null);
-                    setView('stats');
-                  }}
-                />
-              ) : (
+              {view === 'log' && (
+                <ActivityForm onSuccess={() => setView('stats')} />
+              )}
+              {view === 'routines' && <RoutinesManager />}
+              {view === 'stats' && (
                 <StatsDisplay
                   logs={logs}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
+                  onDelete={deleteLog}
+                  onEdit={handleEditLog}
                 />
               )}
             </>
