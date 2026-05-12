@@ -126,14 +126,18 @@ function App() {
           ) : (
             <>
               {view === 'log' && (
-                <ActivityForm onSuccess={() => setView('stats')} />
+                <ActivityForm
+                  initialData={editingLog}
+                  onSuccess={handleSuccess}
+                  onCancel={() => setEditingLog(null)}
+                />
               )}
               {view === 'routines' && <RoutinesManager />}
               {view === 'stats' && (
                 <StatsDisplay
                   logs={logs}
-                  onDelete={deleteLog}
-                  onEdit={handleEditLog}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
                 />
               )}
             </>
