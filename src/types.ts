@@ -11,6 +11,7 @@ export interface Routine {
   user_id: string;
   name: string;
   exercises: ExerciseTemplate[];
+  is_archived?: boolean;
 }
 
 export type ActivityLog = {
