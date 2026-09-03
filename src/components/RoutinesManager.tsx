@@ -101,6 +101,7 @@ export default function RoutinesManager() {
     id: string,
     currentStatus: boolean = false,
   ) => {
+    const isArchiving = !currentStatus;
     const confirmMessage = currentStatus
       ? 'Unarchive this worksheet?'
       : 'Archive this worksheet? It will be hidden from the active list.';
@@ -108,7 +109,10 @@ export default function RoutinesManager() {
     if (window.confirm(confirmMessage)) {
       await supabase
         .from('routines')
-        .update({ is_archived: !currentStatus })
+        .update({
+          is_archived: isArchiving,
+          archived_at: isArchiving ? new Date().toISOString() : null,
+        })
         .eq('id', id);
       fetchRoutines();
     }
@@ -166,11 +170,14 @@ export default function RoutinesManager() {
               className={`bg-white p-4 rounded-xl border shadow-sm ${routine.is_archived ? 'border-gray-300 opacity-80' : 'border-gray-200'}`}
             >
               <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-lg text-gray-800">
+                <h3 className="font-bold text-lg text-gray-800 flex items-center flex-wrap gap-2">
                   {routine.name}
                   {routine.is_archived && (
-                    <span className="ml-2 text-[10px] bg-gray-200 text-gray-600 px-2 py-1 rounded-full uppercase tracking-wider">
+                    <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-1 rounded-full uppercase tracking-wider">
                       Archived
+                      {routine.archived_at
+                        ? ` on ${new Date(routine.archived_at).toLocaleDateString()}`
+                        : ''}
                     </span>
                   )}
                 </h3>

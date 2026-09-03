@@ -12,6 +12,7 @@ export interface Routine {
   name: string;
   exercises: ExerciseTemplate[];
   is_archived?: boolean;
+  archived_at?: string | null;
 }
 
 export type ActivityLog = {
