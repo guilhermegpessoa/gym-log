@@ -32,7 +32,7 @@ Designed with a focus on quick data entry and automated statistical analysis.
 1.  **Clone the repository**
 
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/gym-log.git](https://github.com/YOUR_USERNAME/gym-log.git)
+    git clone [https://github.com/guilhermegpessoa/gym-log.git](https://github.com/guilhermegpessoa/gym-log.git)
     cd gym-log
     ```
 
